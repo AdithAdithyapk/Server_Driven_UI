@@ -1,21 +1,33 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges,ChangeDetectorRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { CommonService } from 'src/app/services/common.service';
+import { ConfigserviceService } from 'src/app/services/configservice.service';
 
 @Component({
   selector: 'app-dynamic',
   templateUrl: './dynamic.component.html',
   styleUrls: ['./dynamic.component.scss']
 })
-export class DynamicComponent implements OnInit, OnChanges {
-  @Input() config: any;
-  formData: any = {};
-  data: any = {}; // ✅ Declare the 'data' property
+export class DynamicComponent implements OnInit {
 
-  constructor(private http: HttpClient, private router: Router, private commonsrc: CommonService) { }
-  
- 
+  @Input() config: any;
+  formData: any = {}; // Store form data
+  data: any = {};     // Store API response data
+  isModalVisible: boolean = false;  // Flag to control modal visibility
+  modalId: string = '';            // ID for the modal (dynamic)
+  modalTitle: string = '';         // Title for the modal
+  modalContent: any[] = [];        // Dynamic content inside the modal
+  modalActions: any = {};          // Modal actions (submit, close)
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    private commonsrc: CommonService,
+    private configService: ConfigserviceService,
+    private cdr: ChangeDetectorRef
+  ) { }
+
+
 
   ngOnInit(): void {
     this.tryFetching(this.config?.action);
@@ -52,8 +64,24 @@ export class DynamicComponent implements OnInit, OnChanges {
     }
   }
 
+  // Fetch dashboard data
+  getDashBoardData() {
+    this.commonsrc.request("GET", "api/dashboard-stats").subscribe((res: any) => {
+      this.data = res;
+    });
+  }
+
+  // Handle actions like opening modals or calling APIs
   handleAction(action: any) {
-    if (action.type === 'api') {
+    if (action.type === 'openModal') {
+      this.configService.getUIConfig('pages', action.modalId).subscribe(
+        (data) => {
+          this.openModal(action.modalId, action.title, data.htmlStructure, data.modalActions);
+        },
+        (error) => console.error('Error loading UI config:', error)
+      );
+
+    } else if (action.type === 'api') {
       const postData: any = {};
       action.fields?.forEach((field: string) => {
         postData[field] = this.formData[field];
@@ -69,6 +97,67 @@ export class DynamicComponent implements OnInit, OnChanges {
     }
   }
 
+  // Open the modal and pass content and actions dynamically
+  openModal(modalId: string, title: string, content: any[], actions: any) {
+    this.modalTitle = title;
+    this.modalContent = content;
+    this.modalActions = actions;
+    this.isModalVisible = true;
+  }
+
+  // Close the modal
+  closeModal() {
+    this.isModalVisible = false;
+  }
+
+  // Handle radio button change explicitly
+  onRadioChange(fieldName: string, value: string) {
+    this.formData[fieldName] = value;
+    console.log(`Selected ${fieldName}:`, value);
+    console.log("Form Data Submitted:", this.formData);
+    // Force change detection (only needed if UI does not update)
+    this.cdr.detectChanges();
+  }
+
+  onCheckboxChange(event: Event, fieldName: string, format?: string) {
+    const isChecked = (event.target as HTMLInputElement).checked;
+  
+    // If format is 'yes-no', store as 'Yes' or 'No', otherwise store as boolean
+    if (format === 'yes-no') {
+      this.formData[fieldName] = isChecked ? 'Yes' : 'No';
+    } else {
+      this.formData[fieldName] = isChecked;
+    }
+  }
+  
+  // Helper function to check if the value is 'Yes' or true
+  isChecked(value: any): boolean {
+    return value === true || value === 'Yes';
+  }
+  
+
+  // Handle form submission
+  handleSubmit() {
+    console.log("Form Data Submitted:", this.formData);
+    this.submitForm(this.formData);  // Submit form data
+    this.closeModal();  // Close modal after submission
+  }
+
+  // Submit form data to the server
+  submitForm(formData: any) {
+    this.http.post('http://localhost:4000/api/students', formData)
+      .subscribe((res) => {
+        console.log("Student added successfully!", res);
+        alert('Student added successfully!');
+        this.tryFetching(this.config?.action);
+
+      }, (err) => {
+        console.error("Error adding student", err);
+        alert('Error adding student');
+      });
+  }
+
+  // Resolve action after API response
   resolveAction(responseAction: any, resData: any) {
     if (!responseAction) return;
 
@@ -82,23 +171,23 @@ export class DynamicComponent implements OnInit, OnChanges {
       case 'reload':
         window.location.reload();
         break;
+      default:
+        break;
     }
   }
 
+  // Resolve dynamic text, e.g., {{value}}
   resolveText(text: string): string {
     if (!text || typeof text !== 'string') return text;
     return text.replace(/{{(.*?)}}/g, (_match, path) => {
       try {
-        return path.trim().split('.').reduce((acc: { [x: string]: any; }, key: string | number) => acc?.[key], this) || '';
+        return path.trim().split('.').reduce((acc: { [key: string]: any }, key: string) => acc?.[key], this) || '';
       } catch (e) {
-        return '';
+        return '';  // Return empty if there's an error
       }
     });
   }
 
-  esolveText(item: any): string {
-    return item?.text || '';  // Handle missing text gracefully
-  }
 
   getRepeatData(path: string): any[] {
     try {
