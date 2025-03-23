@@ -7,7 +7,7 @@ import { ConfigserviceService } from '../../services/configservice.service';
   styles: [``]
 })
 export class FooterComponent implements OnInit {
-  footerText = 'Loading...';
+  footerText = 'It`s Server Driven UI';
 
   constructor(private configService: ConfigserviceService) {}
 
