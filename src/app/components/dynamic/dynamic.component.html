@@ -1,47 +1,117 @@
-<!-- <div *ngIf="config?.htmlStructure">
+<div *ngIf="config?.htmlStructure">
   <ng-container *ngFor="let element of config.htmlStructure">
     <ng-container [ngTemplateOutlet]="renderElement" [ngTemplateOutletContext]="{element: element}"></ng-container>
   </ng-container>
 </div>
 
 <ng-template #renderElement let-element="element">
-  <div *ngIf="element.element === 'div'" [ngClass]="element.class">
-    <ng-container *ngFor="let child of element.children">
-      <ng-container [ngTemplateOutlet]="renderElement" [ngTemplateOutletContext]="{element: child}"></ng-container>
+
+  <ng-container [ngSwitch]="element?.element">
+    <div *ngSwitchCase="'div'" [ngClass]="element.class">
+      <ng-container *ngFor="let child of element.children">
+        <ng-container [ngTemplateOutlet]="renderElement" [ngTemplateOutletContext]="{element: child}"></ng-container>
+      </ng-container>
+    </div>
+    <!-- Render charts -->
+    <div *ngSwitchCase="'chart'" [ngClass]="element?.class">
+      <canvas *ngIf="element?.type === 'bar'" baseChart [datasets]="element?.data?.datasets"
+        [labels]="element?.data?.labels" [options]="element?.options" [chartType]="'bar'">
+      </canvas>
+
+      <canvas *ngIf="element?.type === 'line'" baseChart [datasets]="element?.data?.datasets"
+        [labels]="element?.data?.labels" [options]="element?.options" [chartType]="'line'">
+      </canvas>
+
+      <canvas *ngIf="element?.type === 'pie'" baseChart [datasets]="element?.data?.datasets"
+        [labels]="element?.data?.labels" [options]="element?.options" [chartType]="'pie'">
+      </canvas>
+    </div>
+
+
+    <!-- Render headers (h1, h2, h3, h4, h5, h6) -->
+    <h1 *ngSwitchCase="'h1'" [ngClass]="element?.class">{{ resolveText(element?.text) }}</h1>
+    <h2 *ngSwitchCase="'h2'" [ngClass]="element?.class">{{ resolveText(element?.text) }}</h2>
+    <h3 *ngSwitchCase="'h3'" [ngClass]="element?.class">{{ resolveText(element?.text) }}</h3>
+    <h4 *ngSwitchCase="'h4'" [ngClass]="element?.class">{{ resolveText(element?.text) }}</h4>
+    <h5 *ngSwitchCase="'h5'" [ngClass]="element?.class">{{ resolveText(element?.text) }}</h5>
+    <h6 *ngSwitchCase="'h6'" [ngClass]="element?.class">{{ resolveText(element?.text) }}</h6>
+
+    <!-- Render paragraph (p) -->
+    <p *ngSwitchCase="'p'" [ngClass]="element?.class">{{ resolveText(element?.text) }}</p>
+
+    <!-- Render image (img) -->
+    <img *ngSwitchCase="'img'" [src]="element?.src" [alt]="element?.alt" [ngClass]="element?.class" />
+
+    <!-- Render input elements -->
+    <input *ngSwitchCase="'input'" [type]="element?.type" [placeholder]="element?.placeholder"
+      [(ngModel)]="formData[element?.name]" [ngClass]="element?.class" />
+
+    <!-- Render textarea elements -->
+    <textarea *ngSwitchCase="'textarea'" [placeholder]="element?.placeholder" [(ngModel)]="formData[element?.name]"
+      [ngClass]="element?.class"></textarea>
+
+    <!-- Render select elements -->
+    <select *ngSwitchCase="'select'" [(ngModel)]="formData[element?.name]" [ngClass]="element?.class">
+      <option *ngFor="let option of element?.options" [value]="option.value">{{ option.label }}</option>
+    </select>
+
+    <!-- Render checkbox -->
+    <div *ngSwitchCase="'checkbox'" class="form-check">
+      <input type="checkbox" [(ngModel)]="formData[element?.name]" [ngClass]="element?.class">
+      <label class="form-check-label">{{ resolveText(element?.label) }}</label>
+    </div>
+
+    <!-- Render button -->
+    <button *ngSwitchCase="'button'" [ngClass]="element?.class" (click)="handleAction(element?.action)">
+      {{ resolveText(element?.text) }}
+    </button>
+
+    <!-- Render link (anchor tag) -->
+    <a *ngSwitchCase="'a'" [href]="element?.href" [ngClass]="element?.class">
+      {{ resolveText(element?.text) }}
+    </a>
+
+    <!-- Render label -->
+    <label *ngSwitchCase="'label'" [ngClass]="element?.class">
+      {{ resolveText(element?.text) }}
+    </label>
+
+    <!-- Render blockquote -->
+    <blockquote *ngSwitchCase="'blockquote'" [ngClass]="element?.class">
+      {{ resolveText(element?.text) }}
+    </blockquote>
+
+    <!-- Render list items (ul, ol, li) -->
+    <ul *ngSwitchCase="'ul'" [ngClass]="element?.class">
+      <li *ngFor="let item of element?.items">{{ resolveText(item) }}</li>
+    </ul>
+    <ol *ngSwitchCase="'ol'" [ngClass]="element?.class">
+      <li *ngFor="let item of element?.items">{{ resolveText(item) }}</li>
+    </ol>
+
+    <!-- Render table -->
+    <table *ngSwitchCase="'table'" [ngClass]="element?.class">
+      <thead>
+        <tr>
+          <th *ngFor="let header of element?.headers">{{ resolveText(header) }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of element?.rows">
+          <td *ngFor="let cell of row">{{ resolveText(cell) }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Render span (inline element) -->
+    <span *ngSwitchCase="'span'" [ngClass]="element?.class">
+      {{ resolveText(element?.text) }}
+    </span>
+
+    <!-- Default Case for unsupported element types -->
+    <ng-container *ngSwitchDefault>
+      <span>Unsupported Element</span>
     </ng-container>
-  </div>
-
-  <h2 *ngIf="element.element === 'h1'" [ngClass]="element.class">{{ resolveText(element.text) }}</h2>
-  <h2 *ngIf="element.element === 'h2'" [ngClass]="element.class">{{ resolveText(element.text) }}</h2>
-  <h2 *ngIf="element.element === 'h3'" [ngClass]="element.class">{{ resolveText(element.text) }}</h2>
-  <h2 *ngIf="element.element === 'h4'" [ngClass]="element.class">{{ resolveText(element.text) }}</h2>
-  <h3 *ngIf="element.element === 'h5'" [ngClass]="element.class">{{ resolveText(element.text) }}</h3>
-  <h5 *ngIf="element.element === 'h6'" [ngClass]="element.class">{{ resolveText(element.text) }}</h5>
-
-  <input *ngIf="element.element === 'input'" 
-         [type]="element.type"
-         [placeholder]="element.placeholder"
-         [(ngModel)]="formData[element.name]"
-         [ngClass]="element.class" />
-
-  <select *ngIf="element.element === 'select'" [(ngModel)]="formData[element.name]" [ngClass]="element.class">
-    <option *ngFor="let option of element.options" [value]="option.value">{{ option.label }}</option>
-  </select>
-
-  <div *ngIf="element.element === 'checkbox'" class="form-check">
-    <input type="checkbox" [(ngModel)]="formData[element.name]" [ngClass]="element.class">
-    <label class="form-check-label">{{ element.label }}</label>
-  </div>
-
-  <button *ngIf="element.element === 'button'" [ngClass]="element.class" (click)="handleAction(element.action)">
-    {{ resolveText(element.text) }}
-  </button>
-</ng-template> -->
-
-
-<div *ngIf="config?.htmlStructure">
-  <ng-container *ngFor="let element of config.htmlStructure">
-    <app-dynamic-renderer [element]="element"></app-dynamic-renderer>
   </ng-container>
-</div>
+</ng-template>
 
