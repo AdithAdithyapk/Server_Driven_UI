@@ -90,21 +90,34 @@
     </ol>
 
     <!-- Render table -->
+    <!-- Inside your ng-template #renderElement -->
     <table *ngSwitchCase="'table'" [ngClass]="element?.class">
       <!-- Render Table Headers -->
       <thead>
         <tr>
           <th *ngFor="let header of element?.children[0]?.children[0]?.children">
-            {{ header.text }}
+            {{ resolveText(header.text) }}
           </th>
         </tr>
       </thead>
 
       <!-- Render Table Body -->
-      <tbody>
+      <tbody *ngIf="element?.children[1]?.repeat">
+        <tr *ngFor="let item of getRepeatData(element.children[1].repeat)">
+          {{ logAndReturn(item, 'Row Item') && '' }}
+          <ng-container *ngFor="let row of element.children[1].children">
+            <td *ngFor="let cell of row.children">
+              {{ interpolate(cell.text, item) }}
+            </td>
+          </ng-container>
+        </tr>
+      </tbody>
+
+      <!-- Fallback if no repeat key -->
+      <tbody *ngIf="!element?.children[1]?.repeat">
         <tr *ngFor="let row of element?.children[1]?.children">
           <td *ngFor="let cell of row.children">
-            {{ cell.text }}
+            {{ resolveText(cell.text) }}
           </td>
         </tr>
       </tbody>
