@@ -11,8 +11,9 @@ import { FooterComponent } from './components/footer/footer.component';
 import { NgModule, APP_INITIALIZER } from '@angular/core';
 import { ConfigserviceService } from './services/configservice.service';
 import { NgxJsonViewerModule } from 'ngx-json-viewer';
+import { DynamicRendererComponent } from './dynamic-renderer/dynamic-renderer.component';
 
-
+import { ChartsModule } from 'ng2-charts';
 export function initializeApp(configService: ConfigserviceService) {
   return () => configService.loadInitialRoutes(); 
 }
@@ -24,15 +25,18 @@ export function initializeApp(configService: ConfigserviceService) {
     DynamicComponent,
     HeaderComponent,
     SidebarComponent,
-    FooterComponent
+    FooterComponent,
+    DynamicRendererComponent
   ],
   imports: [
+    ChartsModule,
     BrowserModule,
      FormsModule,
     HttpClientModule,
     AppRoutingModule,
     NgxJsonViewerModule
-  ],
+  ], 
+  exports: [DynamicRendererComponent],
   providers: [{
     provide: APP_INITIALIZER,
     useFactory: initializeApp,

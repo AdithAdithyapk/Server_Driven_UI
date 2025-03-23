@@ -16,6 +16,8 @@ export class DynamicComponent implements OnInit {
   constructor(private http: HttpClient, private router: Router,private commonsrc : CommonService) {}
 
   ngOnInit(): void {
+
+    console.log("*************UI Config**********************",this.config)
     // this.http.get('http://localhost:4000/api/dashboard-stats').subscribe((res: any) => {
     //   this.data = res;
     // });
