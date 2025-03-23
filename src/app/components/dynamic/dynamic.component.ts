@@ -76,4 +76,8 @@ export class DynamicComponent implements OnInit {
       }
     });
   }
+
+  esolveText(item: any): string {
+    return item?.text || '';  // Handle missing text gracefully
+  }
 }

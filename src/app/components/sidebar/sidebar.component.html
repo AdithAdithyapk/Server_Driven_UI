@@ -1,10 +1,19 @@
 <nav class="sidebar bg-light vh-100 p-3">
-    <ul class="nav flex-column">
-      <li *ngFor="let item of menuItems" class="nav-item">
-        <a class="nav-link sidebar-link" [routerLink]="item.action">
-          <i *ngIf="item.icon" [ngClass]="item.icon" class="me-2"></i> {{ item.label }}
-        </a>
-      </li>
-    </ul>
-  </nav>
-  
+  <ul class="nav flex-column">
+    <!-- Main menu items -->
+    <li *ngFor="let item of menuItems" class="nav-item" [class.has-submenu]="item.submenuItems">
+      <a class="nav-link sidebar-link" [routerLink]="item.action" (click)="toggleSubmenu(item)">
+        <i *ngIf="item.icon" [ngClass]="item.icon" class="me-2"></i> {{ item.label }}
+      </a>
+
+      <!-- Submenu dropdown -->
+      <ul *ngIf="item.submenuVisible" class="submenu flex-column ms-3">
+        <li *ngFor="let submenu of item.submenuItems" class="nav-item">
+          <a class="nav-link sidebar-link" [routerLink]="submenu.action">
+            <i *ngIf="submenu.icon" [ngClass]="submenu.icon" class="me-2"></i> {{ submenu.label }}
+          </a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>

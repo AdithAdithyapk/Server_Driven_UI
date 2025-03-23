@@ -19,4 +19,10 @@ export class SidebarComponent implements OnInit {
       (error) => console.error('Error loading sidebar data:', error)
     );
   }
+
+  toggleSubmenu(item: any) {
+    if (item.submenuItems) {
+      item.submenuVisible = !item.submenuVisible;
+    }
+  }
 }
