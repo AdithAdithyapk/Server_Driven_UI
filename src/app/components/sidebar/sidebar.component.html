@@ -1,0 +1,10 @@
+<nav class="sidebar bg-light vh-100 p-3">
+    <ul class="nav flex-column">
+      <li *ngFor="let item of menuItems" class="nav-item">
+        <a class="nav-link sidebar-link" [routerLink]="item.action">
+          <i *ngIf="item.icon" [ngClass]="item.icon" class="me-2"></i> {{ item.label }}
+        </a>
+      </li>
+    </ul>
+  </nav>
+  

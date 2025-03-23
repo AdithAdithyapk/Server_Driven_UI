@@ -1,0 +1,8 @@
+<!-- <app-header *ngIf="showHeader"></app-header> -->
+<div class="d-flex">
+  <app-sidebar *ngIf="showSidebar"></app-sidebar>
+  <div class="flex-grow-1 p-3">
+    <app-dynamic *ngIf="uiConfig" [config]="uiConfig"></app-dynamic>
+  </div>
+</div>
+<!-- <app-footer *ngIf="showFooter"></app-footer> -->

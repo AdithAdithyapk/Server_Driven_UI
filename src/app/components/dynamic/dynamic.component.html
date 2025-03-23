@@ -1,0 +1,37 @@
+<div *ngIf="config?.htmlStructure">
+  <ng-container *ngFor="let element of config.htmlStructure">
+    <ng-container [ngTemplateOutlet]="renderElement" [ngTemplateOutletContext]="{element: element}"></ng-container>
+  </ng-container>
+</div>
+
+<ng-template #renderElement let-element="element">
+  <div *ngIf="element.element === 'div'" [ngClass]="element.class">
+    <ng-container *ngFor="let child of element.children">
+      <ng-container [ngTemplateOutlet]="renderElement" [ngTemplateOutletContext]="{element: child}"></ng-container>
+    </ng-container>
+  </div>
+
+  <h2 *ngIf="element.element === 'h2'" [ngClass]="element.class">{{ resolveText(element.text) }}</h2>
+  <h3 *ngIf="element.element === 'h3'" [ngClass]="element.class">{{ resolveText(element.text) }}</h3>
+  <h5 *ngIf="element.element === 'h5'" [ngClass]="element.class">{{ resolveText(element.text) }}</h5>
+
+  <input *ngIf="element.element === 'input'" 
+         [type]="element.type"
+         [placeholder]="element.placeholder"
+         [(ngModel)]="formData[element.name]"
+         [ngClass]="element.class" />
+
+  <select *ngIf="element.element === 'select'" [(ngModel)]="formData[element.name]" [ngClass]="element.class">
+    <option *ngFor="let option of element.options" [value]="option.value">{{ option.label }}</option>
+  </select>
+
+  <div *ngIf="element.element === 'checkbox'" class="form-check">
+    <input type="checkbox" [(ngModel)]="formData[element.name]" [ngClass]="element.class">
+    <label class="form-check-label">{{ element.label }}</label>
+  </div>
+
+  <button *ngIf="element.element === 'button'" [ngClass]="element.class" (click)="handleAction(element.action)">
+    {{ resolveText(element.text) }}
+  </button>
+</ng-template>
+
