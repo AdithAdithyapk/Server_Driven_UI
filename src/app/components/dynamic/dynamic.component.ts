@@ -40,6 +40,7 @@ export class DynamicComponent implements OnInit {
   }
 
   tryFetching(action: any) {
+    console.log("action-------------->",action);
     if (action?.type === 'data' && action?.method === 'GET') {
       this.fetchInitialData(action);
     }
@@ -56,6 +57,7 @@ export class DynamicComponent implements OnInit {
         .subscribe(
           (res: any) => {
             this.data = res;
+            console.log("this.data---------------->",this.data);
           },
           (err) => {
             this.resolveAction(action.onError, err.error);
@@ -177,13 +179,14 @@ export class DynamicComponent implements OnInit {
   }
 
   // Resolve dynamic text, e.g., {{value}}
-  resolveText(text: string): string {
+  resolveText(text: string, itemContext: any = null): string {
     if (!text || typeof text !== 'string') return text;
     return text.replace(/{{(.*?)}}/g, (_match, path) => {
       try {
-        return path.trim().split('.').reduce((acc: { [key: string]: any }, key: string) => acc?.[key], this) || '';
+        const context = itemContext || this;
+        return path.trim().split('.').reduce((acc: any, key: string) => acc?.[key], context) || '';
       } catch (e) {
-        return '';  // Return empty if there's an error
+        return '';
       }
     });
   }
@@ -202,14 +205,25 @@ export class DynamicComponent implements OnInit {
 
   interpolate(template: string, item: any): string {
     if (!template || typeof template !== 'string') return template;
-
+  
     return template.replace(/{{(.*?)}}/g, (_match, key) => {
       const trimmedKey = key.trim();
-
-      // Smart resolve: strip 'item.' if present
+  
+      // Remove 'item.' prefix if present
       const finalKey = trimmedKey.startsWith('item.') ? trimmedKey.slice(5) : trimmedKey;
-
-      const value = item?.[finalKey];
+  
+      // Try to get from item context first
+      let value = item?.[finalKey];
+  
+      // If not found in item, try to resolve from `this` (component context)
+      if (value === undefined) {
+        try {
+          value = finalKey.split('.').reduce((acc: any, k: string | number) => acc?.[k], this);
+        } catch (e) {
+          value = '';
+        }
+      }
+  
       console.log(`🧩 interpolate – key: ${trimmedKey} | value:`, value);
       return value ?? '';
     });
@@ -218,5 +232,12 @@ export class DynamicComponent implements OnInit {
   logAndReturn(item: any, label: string = ''): any {
     console.log(`🔍 ${label}`, item);
     return item;
+  }
+
+  getElementWithoutRepeat(element: any): any {
+    return {
+      ...element,
+      repeat: null
+    };
   }
 }

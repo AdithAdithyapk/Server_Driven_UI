@@ -1,6 +1,7 @@
 <div *ngIf="config?.htmlStructure">
   <ng-container *ngFor="let element of config.htmlStructure">
-    <ng-container [ngTemplateOutlet]="renderElement" [ngTemplateOutletContext]="{element: element}"></ng-container>
+    <ng-container [ngTemplateOutlet]="renderElement" [ngTemplateOutletContext]="{element: element, item: null}">
+    </ng-container>
   </ng-container>
 </div>
 
@@ -9,191 +10,141 @@
   <div class="modal-content">
     <h3>{{ modalTitle | titlecase}}</h3>
 
-    <!-- Dynamically render content passed to the modal -->
     <div *ngFor="let element of modalContent">
-      <ng-container [ngTemplateOutlet]="renderElement" [ngTemplateOutletContext]="{ element: element }"></ng-container>
+      <ng-container [ngTemplateOutlet]="renderElement" [ngTemplateOutletContext]="{ element: element, item: null }">
+      </ng-container>
     </div>
 
-    <!-- Action buttons -->
     <div class="modal-footer">
       <button *ngIf="modalActions.close" type="button" class="btn btn-success" (click)="closeModal()">
         {{ modalActions.close?.text || 'Close' }}
       </button>
-
       <button *ngIf="modalActions.submit" type="button" class="btn btn-primary" (click)="handleSubmit()">
         {{ modalActions.submit?.text || 'Submit' }}
       </button>
-
-      <!-- You can add other buttons here depending on modalActions -->
     </div>
   </div>
 </div>
 
-
-<ng-template #renderElement let-element="element">
-
+<ng-template #renderElement let-element="element" let-item="item">
   <ng-container [ngSwitch]="element?.element">
+
+    <!-- div -->
     <div *ngSwitchCase="'div'" [ngClass]="element.class">
-      <ng-container *ngFor="let child of element.children">
-        <ng-container [ngTemplateOutlet]="renderElement" [ngTemplateOutletContext]="{element: child}"></ng-container>
+      <ng-container *ngIf="element.repeat; else noRepeatBlock">
+        <ng-container *ngFor="let repeatedItem of getRepeatData(element.repeat)">
+          <ng-container *ngFor="let child of element.children">
+            <ng-container [ngTemplateOutlet]="renderElement"
+                          [ngTemplateOutletContext]="{ element: child, item: repeatedItem }">
+            </ng-container>
+          </ng-container>
+        </ng-container>
       </ng-container>
-    </div>
-    <!-- Render charts -->
-    <div *ngSwitchCase="'chart'" [ngClass]="element?.class">
-      <canvas *ngIf="element?.type === 'bar'" baseChart [datasets]="element?.data?.datasets"
-        [labels]="element?.data?.labels" [options]="element?.options" [chartType]="'bar'">
-      </canvas>
-
-      <canvas *ngIf="element?.type === 'line'" baseChart [datasets]="element?.data?.datasets"
-        [labels]="element?.data?.labels" [options]="element?.options" [chartType]="'line'">
-      </canvas>
-
-      <canvas *ngIf="element?.type === 'pie'" baseChart [datasets]="element?.data?.datasets"
-        [labels]="element?.data?.labels" [options]="element?.options" [chartType]="'pie'">
-      </canvas>
+      <ng-template #noRepeatBlock>
+        <ng-container *ngFor="let child of element.children">
+          <ng-container [ngTemplateOutlet]="renderElement"
+                        [ngTemplateOutletContext]="{ element: child, item: item }">
+          </ng-container>
+        </ng-container>
+      </ng-template>
     </div>
 
+    <!-- Text Elements -->
+    <h1 *ngSwitchCase="'h1'" [ngClass]="element.class">{{ interpolate(element.text, item) }}</h1>
+    <h2 *ngSwitchCase="'h2'" [ngClass]="element.class">{{ interpolate(element.text, item) }}</h2>
+    <h3 *ngSwitchCase="'h3'" [ngClass]="element.class">{{ interpolate(element.text, item) }}</h3>
+    <h4 *ngSwitchCase="'h4'" [ngClass]="element.class">{{ interpolate(element.text, item) }}</h4>
+    <h5 *ngSwitchCase="'h5'" [ngClass]="element.class">{{ interpolate(element.text, item) }}</h5>
+    <h6 *ngSwitchCase="'h6'" [ngClass]="element.class">{{ interpolate(element.text, item) }}</h6>
+    <p *ngSwitchCase="'p'" [ngClass]="element.class">{{ interpolate(element.text, item) }}</p>
+    <span *ngSwitchCase="'span'" [ngClass]="element.class">{{ interpolate(element.text, item) }}</span>
+    <label *ngSwitchCase="'label'" [ngClass]="element.class">{{ interpolate(element.text, item) }}</label>
+    <blockquote *ngSwitchCase="'blockquote'" [ngClass]="element.class">{{ interpolate(element.text, item) }}</blockquote>
 
-    <!-- Render headers (h1, h2, h3, h4, h5, h6) -->
-    <h1 *ngSwitchCase="'h1'" [ngClass]="element?.class">{{ resolveText(element?.text) }}</h1>
-    <h2 *ngSwitchCase="'h2'" [ngClass]="element?.class">{{ resolveText(element?.text) }}</h2>
-    <h3 *ngSwitchCase="'h3'" [ngClass]="element?.class">{{ resolveText(element?.text) }}</h3>
-    <h4 *ngSwitchCase="'h4'" [ngClass]="element?.class">{{ resolveText(element?.text) }}</h4>
-    <h5 *ngSwitchCase="'h5'" [ngClass]="element?.class">{{ resolveText(element?.text) }}</h5>
-    <h6 *ngSwitchCase="'h6'" [ngClass]="element?.class">{{ resolveText(element?.text) }}</h6>
+    <!-- Button -->
+    <button *ngSwitchCase="'button'" [ngClass]="element.class" (click)="handleAction(element.action)">
+      {{ interpolate(element.text, item) }}
+    </button>
 
-    <!-- Render paragraph (p) -->
-    <p *ngSwitchCase="'p'" [ngClass]="element?.class">{{ resolveText(element?.text) }}</p>
+    <!-- Link -->
+    <a *ngSwitchCase="'a'" [href]="element.href" [ngClass]="element.class">{{ interpolate(element.text, item) }}</a>
 
-    <!-- Render image (img) -->
-    <img *ngSwitchCase="'img'" [src]="element?.src" [alt]="element?.alt" [ngClass]="element?.class" />
+    <!-- Form Elements -->
+    <input *ngSwitchCase="'input'" [type]="element.type" [placeholder]="element.placeholder"
+           [(ngModel)]="formData[element.name]" [ngClass]="element.class" />
 
-    <!-- Render input elements -->
-    <input *ngSwitchCase="'input'" [type]="element?.type" [placeholder]="element?.placeholder"
-      [(ngModel)]="formData[element?.name]" [ngClass]="element?.class" />
+    <textarea *ngSwitchCase="'textarea'" [placeholder]="element.placeholder"
+              [(ngModel)]="formData[element.name]" [ngClass]="element.class"></textarea>
 
-    <!-- Render textarea elements -->
-    <textarea *ngSwitchCase="'textarea'" [placeholder]="element?.placeholder" [(ngModel)]="formData[element?.name]"
-      [ngClass]="element?.class"></textarea>
-
-    <!-- Render select elements -->
-    <select *ngSwitchCase="'select'" [(ngModel)]="formData[element?.name]" [ngClass]="element?.class">
-      <option *ngFor="let option of element?.options" [value]="option.value">{{ option.label }}</option>
+    <select *ngSwitchCase="'select'" [(ngModel)]="formData[element.name]" [ngClass]="element.class">
+      <option *ngFor="let option of element.options" [value]="option.value">{{ option.label }}</option>
     </select>
 
-    <!-- Render radio buttons dynamically -->
-    <!-- Dynamic Radio Buttons -->
+    <!-- Radio Group -->
     <div *ngSwitchCase="'radio-group'" class="form-group">
-      <label>{{ resolveText(element?.label) }}</label>
-      <div *ngFor="let option of element?.options" class="form-check">
+      <label>{{ interpolate(element.label, item) }}</label>
+      <div *ngFor="let option of element.options" class="form-check">
         <input type="radio" [name]="element.name" [value]="option.value"
-          [checked]="formData[element.name] === option.value" (change)="onRadioChange(element.name, option.value)"
-          class="form-check-input" />
+               [checked]="formData[element.name] === option.value"
+               (change)="onRadioChange(element.name, option.value)" class="form-check-input" />
         <label class="form-check-label">{{ option.label }}</label>
       </div>
     </div>
-    <!-- Render checkbox with correct binding -->
+
+    <!-- Checkbox -->
     <div *ngSwitchCase="'checkbox'" class="form-check">
-      <input type="checkbox"
-             [checked]="isChecked(formData[element?.name])"
-             (change)="onCheckboxChange($event, element?.name, element?.format)"
-             [ngClass]="element?.class">
-      <label class="form-check-label">
-        {{ resolveText(element?.label) }}
-      </label>
+      <input type="checkbox" [checked]="isChecked(formData[element.name])"
+             (change)="onCheckboxChange($event, element.name, element.format)"
+             [ngClass]="element.class" />
+      <label class="form-check-label">{{ interpolate(element.label, item) }}</label>
     </div>
 
-    <!-- Render checkbox -->
-    <!-- <div *ngSwitchCase="'checkbox'" class="form-check">
-      <input type="checkbox" [(ngModel)]="formData[element?.name]" [ngClass]="element?.class">
-      <label class="form-check-label">{{ resolveText(element?.label) }}</label>
-    </div> -->
-
-    <!-- Render button -->
-    <button *ngSwitchCase="'button'" [ngClass]="element?.class" (click)="handleAction(element?.action)">
-      {{ resolveText(element?.text) }}
-    </button>
-
-    <!-- Render link (anchor tag) -->
-    <a *ngSwitchCase="'a'" [href]="element?.href" [ngClass]="element?.class">
-      {{ resolveText(element?.text) }}
-    </a>
-
-    <!-- Render label -->
-    <label *ngSwitchCase="'label'" [ngClass]="element?.class">
-      {{ resolveText(element?.text) }}
-    </label>
-
-    <!-- Render blockquote -->
-    <blockquote *ngSwitchCase="'blockquote'" [ngClass]="element?.class">
-      {{ resolveText(element?.text) }}
-    </blockquote>
-
-    <!-- Render list items (ul, ol, li) -->
-    <ul *ngSwitchCase="'ul'" [ngClass]="element?.class">
-      <li *ngFor="let item of element?.items">{{ resolveText(item) }}</li>
+    <!-- List -->
+    <ul *ngSwitchCase="'ul'" [ngClass]="element.class">
+      <li *ngFor="let li of element.items">{{ interpolate(li, item) }}</li>
     </ul>
-    <ol *ngSwitchCase="'ol'" [ngClass]="element?.class">
-      <li *ngFor="let item of element?.items">{{ resolveText(item) }}</li>
+    <ol *ngSwitchCase="'ol'" [ngClass]="element.class">
+      <li *ngFor="let li of element.items">{{ interpolate(li, item) }}</li>
     </ol>
 
-    <!-- Render table -->
-    <!-- <table *ngSwitchCase="'table'" [ngClass]="element?.class">
+    <!-- Charts -->
+    <div *ngSwitchCase="'chart'" [ngClass]="element.class">
+      <canvas *ngIf="element.type === 'bar'" baseChart [datasets]="element.data.datasets"
+              [labels]="element.data.labels" [options]="element.options" [chartType]="'bar'"></canvas>
+      <canvas *ngIf="element.type === 'line'" baseChart [datasets]="element.data.datasets"
+              [labels]="element.data.labels" [options]="element.options" [chartType]="'line'"></canvas>
+      <canvas *ngIf="element.type === 'pie'" baseChart [datasets]="element.data.datasets"
+              [labels]="element.data.labels" [options]="element.options" [chartType]="'pie'"></canvas>
+    </div>
+
+    <!-- Table -->
+    <table *ngSwitchCase="'table'" [ngClass]="element.class">
       <thead>
         <tr>
-          <th *ngFor="let header of element?.children[0]?.children[0]?.children">
-            {{ resolveText(header.text) }}
+          <th *ngFor="let header of element.children[0]?.children[0]?.children">
+            {{ interpolate(header.text, item) }}
           </th>
         </tr>
       </thead>
-
-      <tbody>
-        <tr *ngFor="let row of element?.children[1]?.children">
-          <td *ngFor="let cell of row.children">
-            {{ resolveText(cell.text) }}
-          </td>
-        </tr>
-      </tbody>
-    </table> -->
-
-    <table *ngSwitchCase="'table'" [ngClass]="element?.class">
-      <!-- Render Table Headers -->
-      <thead>
-        <tr>
-          <th *ngFor="let header of element?.children[0]?.children[0]?.children">
-            {{ resolveText(header.text) }}
-          </th>
-        </tr>
-      </thead>
-
-      <!-- Render Table Body -->
-      <tbody *ngIf="element?.children[1]?.repeat">
-        <tr *ngFor="let item of getRepeatData(element.children[1].repeat)">
-          {{ logAndReturn(item, 'Row Item') && '' }}
+      <tbody *ngIf="element.children[1]?.repeat">
+        <tr *ngFor="let rowItem of getRepeatData(element.children[1].repeat)">
           <ng-container *ngFor="let row of element.children[1].children">
             <td *ngFor="let cell of row.children">
-              {{ interpolate(cell.text, item) }}
+              {{ interpolate(cell.text, rowItem) }}
             </td>
           </ng-container>
         </tr>
       </tbody>
-
-      <!-- Fallback if no repeat key -->
-      <tbody *ngIf="!element?.children[1]?.repeat">
-        <tr *ngFor="let row of element?.children[1]?.children">
+      <tbody *ngIf="!element.children[1]?.repeat">
+        <tr *ngFor="let row of element.children[1]?.children">
           <td *ngFor="let cell of row.children">
-            {{ resolveText(cell.text) }}
+            {{ interpolate(cell.text, item) }}
           </td>
         </tr>
       </tbody>
     </table>
 
-    <!-- Render span (inline element) -->
-    <span *ngSwitchCase="'span'" [ngClass]="element?.class">
-      {{ resolveText(element?.text) }}
-    </span>
-
-    <!-- Default Case for unsupported element types -->
+    <!-- Fallback -->
     <ng-container *ngSwitchDefault>
       <span>Unsupported Element</span>
     </ng-container>
