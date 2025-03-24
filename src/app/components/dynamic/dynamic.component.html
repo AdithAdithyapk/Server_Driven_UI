@@ -144,6 +144,10 @@
       </tbody>
     </table>
 
+    <!-- Image Element -->
+  <img *ngSwitchCase="'img'" [src]="element.src" [alt]="element.alt || 'Image'" [ngClass]="element.class" />
+
+
     <!-- Fallback -->
     <ng-container *ngSwitchDefault>
       <span>Unsupported Element</span>

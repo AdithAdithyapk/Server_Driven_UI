@@ -19,21 +19,24 @@ export class DynamicComponent implements OnInit {
   modalTitle: string = '';         // Title for the modal
   modalContent: any[] = [];        // Dynamic content inside the modal
   modalActions: any = {};          // Modal actions (submit, close)
+  admin : any;
   constructor(
     private http: HttpClient,
     private router: Router,
     private commonsrc: CommonService,
     private configService: ConfigserviceService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
   ) { }
 
 
 
   ngOnInit(): void {
+    this.admin =  sessionStorage.getItem("admin");
     this.tryFetching(this.config?.action);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    this.admin =  sessionStorage.getItem("admin");
     if (changes['config'] && !changes['config'].firstChange) {
       this.tryFetching(this.config?.action);
     }
@@ -64,8 +67,31 @@ export class DynamicComponent implements OnInit {
           }
         );
     }
+
+    if (this.config) {
+      this.config.htmlStructure = this.filterAdminElements(this.config.htmlStructure);
+    }
   }
 
+  filterAdminElements(elements: any[]): any[] {
+    if (!elements) return [];
+    
+    return elements
+      .filter((element: any) => {
+        // If `visibleForAdmin` is true and user is not admin, remove the element
+        if (element.visibleForAdmin && this.admin == "no") {
+          return false;
+        }
+  
+        // Recursively check children if they exist
+        if (element.children) {
+          element.children = this.filterAdminElements(element.children);
+        }
+        
+        return true;
+      });
+  }
+  
   // Fetch dashboard data
   getDashBoardData() {
     this.commonsrc.request("GET", "api/dashboard-stats").subscribe((res: any) => {
@@ -92,6 +118,10 @@ export class DynamicComponent implements OnInit {
       this.http.request(action.method, `http://localhost:4000${action.url}`, {
         body: postData
       }).subscribe((res: any) => {
+        if(action.url == "/authenticate")
+        {
+           sessionStorage.setItem("admin",res.admin);
+        }
         this.resolveAction(action.onSuccess, res);
       }, err => {
         this.resolveAction(action.onError, err.error);

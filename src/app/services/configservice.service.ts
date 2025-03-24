@@ -3,12 +3,16 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { DynamicComponent } from '../components/dynamic/dynamic.component';
 import { Router, Routes } from '@angular/router';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ConfigserviceService {
   private apiUrl = 'http://localhost:4000/api/json';
+
+  private menuItemsSubject = new BehaviorSubject<any[]>([]);
+  menuItems$ = this.menuItemsSubject.asObservable();
 
   constructor(private http: HttpClient, private router: Router) { }
 
@@ -27,12 +31,16 @@ export class ConfigserviceService {
   loadInitialRoutes(): Promise<any> {
     return this.getUIConfig('components', 'sidebar').toPromise().then((data) => {
       if (data.menuItems) {
+        
+        if(sessionStorage.getItem("admin") == "no")
+        {
+          data.menuItems = data.menuItems.filter((item:any) => item.user);
+        }
         const dynamicRoutes: Routes = data.menuItems.map((item: { action: string; }) => ({
           path: item.action.replace('/', ''),
-
           component: DynamicComponent
         }));
-
+        
         this.router.resetConfig([...dynamicRoutes, { path: '**', redirectTo: '', pathMatch: 'full' }]);
       }
     }).catch(error => console.error('Error loading initial routes:', error));

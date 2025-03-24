@@ -14,7 +14,12 @@ export class SidebarComponent implements OnInit {
   ngOnInit() {
     this.configService.getUIConfig('components', 'sidebar').subscribe(
       (data) => {
-        this.menuItems = data.menuItems || [];
+        this.menuItems = data.menuItems.filter((item:any) => item.admin) || [];
+        if(sessionStorage.getItem("admin") == "no")
+        {
+          this.menuItems = data.menuItems.filter((item:any) => item.user);
+        }
+       
       },
       (error) => console.error('Error loading sidebar data:', error)
     );
